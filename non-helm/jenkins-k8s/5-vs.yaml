@@ -1,0 +1,23 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  labels:
+  name: jenkins
+  namespace: devops-tools
+spec:
+  gateways:
+  - istio-system/general-gateway
+  hosts:
+  - 'jenkins.sosotechnologies.com'
+  http:
+  - retries:
+      attempts: 3
+      perTryTimeout: 2s
+    match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: jenkins-service
+        port:
+          number: 8080

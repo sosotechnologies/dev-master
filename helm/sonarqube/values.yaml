@@ -1,0 +1,249 @@
+deploymentType: "StatefulSet"
+replicaCount: 1
+revisionHistoryLimit: 10
+deploymentStrategy: {}
+
+OpenShift:
+  enabled: false
+  createSCC: true
+
+edition: "community"
+
+image:
+  repository: cafanwii/sonarqube
+  tag: 1.0.0
+  pullPolicy: IfNotPresent
+
+securityContext:
+  fsGroup: 0
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 0
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop: ["ALL"]
+
+elasticsearch:
+  configureNode: false
+  bootstrapChecks: true
+
+service:
+  type: ClusterIP
+  externalPort: 9000
+  internalPort: 9000
+  labels:
+  annotations: {}
+
+networkPolicy:
+  enabled: false
+
+  prometheusNamespace: "monitoring"
+
+sonarWebContext: ""
+
+nginx:
+  enabled: false
+
+ingress:
+  enabled: false
+  hosts:
+    - name: sonarqube.your-org.com
+
+  annotations: {}
+  
+  tls: []
+
+route:
+  enabled: false
+  host: ""
+
+  tls:
+    termination: edge
+  annotations: {}
+affinity: {}
+tolerations: []
+
+nodeSelector: {}
+hostAliases: []
+
+readinessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  failureThreshold: 6
+  timeoutSeconds: 1
+  
+livenessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  failureThreshold: 6
+  timeoutSeconds: 1
+
+startupProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 24
+  timeoutSeconds: 1
+
+initContainers:
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 0
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop: ["ALL"]
+  resources: {}
+extraInitContainers: {}
+extraContainers: []
+
+caCerts:
+  enabled: false
+  image: adoptopenjdk/openjdk11:alpine
+  secret: your-secret
+
+initSysctl:
+  enabled: true
+  vmMaxMapCount: 524288
+  fsFileMax: 131072
+  nofile: 131072
+  nproc: 8192
+  securityContext:
+    privileged: true
+    runAsUser: 0
+
+initFs:
+  enabled: true
+
+  securityContext:
+    privileged: false
+    runAsNonRoot: false
+    runAsUser: 0
+    runAsGroup: 0
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop: ["ALL"]
+      add: ["CHOWN"]
+
+prometheusExporter:
+  enabled: false
+  version: "0.17.2"
+  noCheckCertificate: false
+  webBeanPort: 8000
+  ceBeanPort: 8001
+
+  config:
+    rules:
+      - pattern: ".*"
+
+prometheusMonitoring:
+  podMonitor:
+    enabled: false
+    namespace: "default"
+    interval: 30s
+
+plugins:
+  install: []
+  noCheckCertificate: false
+
+jvmOpts: ""
+jvmCeOpts: ""
+
+monitoringPasscode: "define_it"
+annotations: {}
+
+resources:
+  limits:
+    cpu: 800m
+    memory: 4Gi
+  requests:
+    cpu: 400m
+    memory: 2Gi
+
+persistence:
+  enabled: false
+  annotations: {}
+
+  storageClass:
+  accessMode: ReadWriteOnce
+  size: 5Gi
+  uid: 1000
+  guid: 0
+
+  volumes: []
+  mounts: []
+
+emptyDir: {}
+## This is sosotech external database credentials. Database password is stored as secret name: sonarqube-postgres-secret
+jdbcOverwrite:
+  enable: true
+  jdbcUrl: "jdbc:postgresql://10.0.0.36/sonarqubedev?socketTimeout=1500"
+  jdbcUsername: "cafanwiiuser"
+  jdbcSecretName: "sonarqubedev-postgres-secret"
+  jdbcSecretPasswordKey: "password"
+
+postgresql:
+  enabled: false
+  postgresqlUsername: ""
+  postgresqlPassword: ""
+  postgresqlDatabase: ""
+  service:
+    port: 5432
+  resources:
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 20Gi
+    storageClass:
+  securityContext:
+    enabled: true
+
+    fsGroup: 1001
+  containerSecurityContext:
+
+    enabled: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop: ["ALL"]
+  volumePermissions:
+    enabled: false
+    securityContext:
+      runAsUser: 0
+  shmVolume:
+    chmod:
+      enabled: false
+  serviceAccount:
+    enabled: false
+podLabels: {}
+sonarqubeFolder: /opt/sonarqube
+
+tests:
+  image: ""
+  enabled: true
+  resources: {}
+
+serviceAccount:
+  create: false
+  annotations: {}
+
+extraConfig:
+  secrets: []
+  configmaps: []
+
+terminationGracePeriodSeconds: 60
