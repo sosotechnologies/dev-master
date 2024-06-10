@@ -1,0 +1,105 @@
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: filebeat-sa
+  namespace: eck
+---  
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: eck
+data:
+  filebeat.yml: |-
+    filebeat.inputs:
+    - type: log
+      paths:
+        - /var/log/sosotech.log 
+
+    output.elasticsearch:
+      hosts: ["https://elastic.sosotechnologies.com"] 
+      protocol: "https"
+      username: "elastic"
+      password: "62C76c0Zu5y053AQVMbbIMr6"
+
+    setup.kibana:
+      host: "https://kibana.sosotechnologies.com" 
+      protocol: "https"
+      username: "elastic" 
+      password: "62C76c0Zu5y053AQVMbbIMr6"
+      ssl.enabled: true 
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: filebeat-es-ssl
+  namespace: eck
+data:
+  # Certificate authority for Elasticsearch
+  ca.crt: BASE64_ENCODED_CA_CERT
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: filebeat-kb-ssl
+  namespace: eck
+data:
+  # Certificate authority for Kibana
+  ca.crt: BASE64_ENCODED_CA_CERT
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: filebeat
+  namespace: eck
+spec:
+  selector:
+    matchLabels:
+      app: filebeat
+  template:
+    metadata:
+      labels:
+        app: filebeat
+    spec:
+      serviceAccountName: filebeat-sa
+      automountServiceAccountToken: true
+      containers:
+      - name: filebeat
+        image: docker.elastic.co/beats/filebeat:8.13.3
+        args: [
+          "-c", "/etc/filebeat.yml",
+          "-e"
+        ]
+        volumeMounts:
+        - name: config
+          mountPath: /etc/filebeat.yml
+          subPath: filebeat.yml
+          readOnly: true
+        - name: data
+          mountPath: /usr/share/filebeat/data
+        - name: varlog
+          mountPath: /var/log
+        - name: dockersock
+          mountPath: /var/run/docker.sock
+        securityContext:
+          runAsUser: 0
+      volumes:
+      - name: config
+        configMap:
+          name: filebeat-config
+      - name: data
+        emptyDir: {}
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+---
+
+  
