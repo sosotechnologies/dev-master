@@ -1,0 +1,43 @@
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: eck
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL:  https://github.com/sosotechnologies/dev-master.git
+#     targetRevision: HEAD
+#     path: non-helm/deployment
+#     directory:
+#       include: 
+#         - 1-deploy.yaml
+#         - 2-deploy.yaml
+#   destination:
+#     namespace: sosargodeploy
+#     server: https://kubernetes.default.svc
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: arrgo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/sosotechnologies/dev-master.git
+    targetRevision: HEAD
+    path: non-helm/deployments
+    kustomize:
+      namePrefix: deployments-
+  destination:
+    namespace: sosargodeploy
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
