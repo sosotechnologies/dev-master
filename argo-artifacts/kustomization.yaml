@@ -1,0 +1,3 @@
+resources:
+  - 1-deploy.yaml  
+  - 2-deploy.yaml
